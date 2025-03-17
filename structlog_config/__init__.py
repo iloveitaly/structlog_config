@@ -32,7 +32,7 @@ from structlog.tracebacks import ExceptionDictTransformer
 from structlog.typing import EventDict, ExcInfo
 from typeid import TypeID
 
-from .environments import is_production, is_staging
+from .environments import is_production, is_pytest, is_staging
 from .warnings import redirect_showwarnings
 
 logging.basicConfig(
@@ -324,12 +324,9 @@ def configure_logger():
     redirect_showwarnings()
     silence_loud_loggers()
 
-    # PYTEST_CURRENT_TEST is set by pytest to indicate the current test being run
-    # Don't cache the loggers during tests, it make it hard to capture them
-    cache_logger_on_first_use = "PYTEST_CURRENT_TEST" not in os.environ
-
     structlog.configure(
-        cache_logger_on_first_use=cache_logger_on_first_use,
+        # Don't cache the loggers during tests, it make it hard to capture them
+        cache_logger_on_first_use=not is_pytest(),
         wrapper_class=structlog.make_filtering_bound_logger(_get_log_level()),
         # structlog.stdlib.LoggerFactory is the default, which supports `structlog.stdlib.add_logger_name`
         logger_factory=_logger_factory(),

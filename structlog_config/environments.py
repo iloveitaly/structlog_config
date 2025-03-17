@@ -29,3 +29,10 @@ def is_staging():
 
 def is_development():
     return python_environment() == "development"
+
+
+def is_pytest():
+    """
+    PYTEST_CURRENT_TEST is set by pytest to indicate the current test being run
+    """
+    return "PYTEST_CURRENT_TEST" in os.environ
