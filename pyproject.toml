@@ -1,0 +1,25 @@
+[project]
+name = "structlog_config"
+version = "0.1.0"
+description = ""
+keywords = []
+readme = "README.md"
+requires-python = ">=3.9"
+dependencies = []
+authors = [{ name = "Michael Bianco", email = "mike@mikebian.co" }]
+urls = { "Repository" = "https://github.com/iloveitaly/structlog_config" }
+
+# additional packaging information: https://packaging.python.org/en/latest/specifications/core-metadata/#license
+[project.scripts]
+structlog_config = "structlog_config:main"
+
+# https://github.com/astral-sh/uv/issues/5200
+[tool.uv]
+package = true
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[dependency-groups]
+dev = ["pytest>=8.3.3"]

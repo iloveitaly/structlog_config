@@ -1,0 +1,36 @@
+# ports are not exposed locally, instead dynamic orb domains are used to avoid clobbering localhost ports
+services:
+  # port 5432
+  postgres:
+    image: postgres:latest
+    environment:
+      POSTGRES_USER: root
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: development
+    ports:
+      - ${CI:+5432}:5432
+    volumes:
+      - app_postgres_data:/var/lib/postgresql/data/
+    healthcheck:
+      # if you customize the default user at all, this healthcheck with clutter your logs
+      # since the default username + database does not match up
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 2s
+      timeout: 5s
+      retries: 3
+
+  # port 6379
+  redis:
+    image: redis:latest
+    restart: always
+    ports:
+      - ${CI:+6379}:6379
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli ping"]
+      interval: 2s
+      timeout: 5s
+      retries: 3
+
+volumes:
+  # NOTE redis data is not persisted, assumed to be ephemeral
+  app_postgres_data:
