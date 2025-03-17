@@ -16,16 +16,7 @@ References:
 
 import logging
 import os
-
-logging.basicConfig(
-    level=os.environ.get("LOG_LEVEL", "INFO").upper(),
-)
-
-logger = logging.getLogger(__name__)
-
-
 import sys
-import warnings
 from typing import Any, MutableMapping, TextIO
 
 import orjson
@@ -42,46 +33,13 @@ from structlog.typing import EventDict, ExcInfo
 from typeid import TypeID
 
 from ..environments import is_production, is_staging
+from .warnings import redirect_showwarnings
 
-_original_warnings_showwarning: Any = None
+logging.basicConfig(
+    level=os.environ.get("LOG_LEVEL", "INFO").upper(),
+)
 
-
-def _showwarning(
-    message: Warning | str,
-    category: type[Warning],
-    filename: str,
-    lineno: int,
-    file: TextIO | None = None,
-    line: str | None = None,
-) -> Any:
-    """
-    Redirects warnings to structlog so they appear in task logs etc.
-
-    Implementation of showwarnings which redirects to logging, which will first
-    check to see if the file parameter is None. If a file is specified, it will
-    delegate to the original warnings implementation of showwarning. Otherwise,
-    it will call warnings.formatwarning and will log the resulting string to a
-    warnings logger named "py.warnings" with level logging.WARNING.
-    """
-    if file is not None:
-        if _original_warnings_showwarning is not None:
-            _original_warnings_showwarning(
-                message, category, filename, lineno, file, line
-            )
-    else:
-        log = structlog.get_logger(logger_name="py.warnings")
-        log.warning(
-            str(message), category=category.__name__, filename=filename, lineno=lineno
-        )
-
-
-def redirect_showwarnings():
-    global _original_warnings_showwarning
-
-    if _original_warnings_showwarning is None:
-        _original_warnings_showwarning = warnings.showwarning
-        # Capture warnings and show them via structlog
-        warnings.showwarning = _showwarning
+package_logger = logging.getLogger(__name__)
 
 
 def pretty_traceback_exception_formatter(sio: TextIO, exc_info: ExcInfo) -> None:

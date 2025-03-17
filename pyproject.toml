@@ -5,7 +5,9 @@ description = ""
 keywords = []
 readme = "README.md"
 requires-python = ">=3.9"
-dependencies = []
+dependencies = [
+    "structlog>=25.2.0",
+]
 authors = [{ name = "Michael Bianco", email = "mike@mikebian.co" }]
 urls = { "Repository" = "https://github.com/iloveitaly/structlog_config" }
 
