@@ -32,7 +32,7 @@ from structlog.tracebacks import ExceptionDictTransformer
 from structlog.typing import EventDict, ExcInfo
 from typeid import TypeID
 
-from ..environments import is_production, is_staging
+from .environments import is_production, is_staging
 from .warnings import redirect_showwarnings
 
 logging.basicConfig(
