@@ -25,8 +25,8 @@ jobs:
       - uses: jdx/mise-action@v2
       - run: mise use python@${{ matrix.python-version }}
       - run: uv sync
-      - run: uv run ${{ github.event.repository.name }} --help
-      - run: uv run python -c 'import ${{ github.event.repository.name }}'
+      - name: Make sure the CLI runs properly
+        run: uv run ${{ github.event.repository.name }} --help
       - run: uv run pytest
 
   build-and-publish:
@@ -36,18 +36,6 @@ jobs:
       - uses: actions/checkout@v4
       - uses: jdx/mise-action@v2
       - run: uv sync
-
-      # helpful if you lazy and don't have time to write tests
-      - name: Make sure we can import the module
-        run: uv run python -c 'import ${{ github.event.repository.name }}'
-
-      - name: Make sure it runs
-        run: uv run ${{ github.event.repository.name }} --help
-
-      - name: Make sure it can be imported
-        run: uv run python -c 'import ${{ github.event.repository.name }}'
-
-      - run: uv run pytest
 
       - name: Conventional Changelog Action
         id: changelog

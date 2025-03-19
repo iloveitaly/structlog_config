@@ -21,11 +21,16 @@ _message_after_copy: |
 project_name:
   type: str
   help: Dash separated project slug
-  default: "{{ \"basename $(pwd)\" | shell() | trim | regex_replace(' ', '_') }}"
+  default: "{{ \"basename $(pwd)\" | shell() | trim | regex_replace(' ', '-') | regex_replace('_', '-') }}"
   validator: >-
     {% if not (project_name | regex_search('^[a-z][a-z0-9-_]+$')) %}
     project_name must start with a letter, followed one or more letters, digits or dashes all lowercase.
     {% endif %}
+
+# https://github.com/superlinear-ai/substrate/blob/main/copier.yml
+project_name_snake_case:
+  when: false
+  default: "{{ project_name | lower | replace('-', '_') }}"
 
 full_name:
   type: str
@@ -52,7 +57,7 @@ _exclude:
   - /metadata.json
 
 _tasks:
-  - git init
+  - '[ ! -d .git ] && git init'
   - touch README.md
   - uv sync
   - git add -A
