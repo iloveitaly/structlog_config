@@ -138,6 +138,14 @@ wheels = [
 ]
 
 [[package]]
+name = "python-decouple-typed"
+version = "3.11.0"
+source = { registry = "https://pypi.org/simple" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/9d/ca/fc5a6119146651cbfbb4aae333a2e6f69844161092c450b10e97064f5e75/python_decouple_typed-3.11.0-py3-none-any.whl", hash = "sha256:967665073aec7a861844e0d9d21768324d3d819311574702cf5be7403a18da58", size = 11440 },
+]
+
+[[package]]
 name = "structlog"
 version = "25.2.0"
 source = { registry = "https://pypi.org/simple" }
@@ -155,6 +163,7 @@ version = "0.1.0"
 source = { editable = "." }
 dependencies = [
     { name = "orjson" },
+    { name = "python-decouple-typed" },
     { name = "structlog" },
 ]
 
@@ -166,6 +175,7 @@ dev = [
 [package.metadata]
 requires-dist = [
     { name = "orjson", specifier = ">=3.10.15" },
+    { name = "python-decouple-typed", specifier = ">=3.11.0" },
     { name = "structlog", specifier = ">=25.2.0" },
 ]
 
