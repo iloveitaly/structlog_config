@@ -2,14 +2,13 @@ import logging
 import sys
 
 import structlog
-from decouple import config
 
+from .constants import LOG_LEVEL, PYTHONASYNCIODEBUG
 from .environments import is_production, is_staging
 
 
 def _get_log_level():
-    log_level = config("LOG_LEVEL", default="INFO", cast=str)
-    return logging.getLevelNamesMapping()[log_level.upper()]
+    return logging.getLevelNamesMapping()[LOG_LEVEL]
 
 
 def reset_stdlib_logger(
@@ -110,7 +109,7 @@ def redirect_stdlib_loggers():
 
 def silence_loud_loggers():
     # unless we are explicitly debugging asyncio, I don't want to hear from it
-    if not config("PYTHONASYNCIODEBUG", cast=bool, default=False):
+    if not PYTHONASYNCIODEBUG:
         logging.getLogger("asyncio").setLevel(logging.WARNING)
 
     # TODO httpcore, httpx, urlconnection, etc

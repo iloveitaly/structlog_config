@@ -18,6 +18,7 @@ from structlog_config.formatters import (
     simplify_activemodel_objects,
 )
 
+from .constants import LOG_LEVEL, PYTHON_LOG_PATH
 from .environments import is_production, is_pytest, is_staging
 from .stdlib_logging import (
     _get_log_level,
@@ -28,7 +29,7 @@ from .stdlib_logging import (
 from .warnings import redirect_showwarnings
 
 logging.basicConfig(
-    level=os.environ.get("LOG_LEVEL", "INFO").upper(),
+    level=LOG_LEVEL,
 )
 
 package_logger = logging.getLogger(__name__)
@@ -113,10 +114,8 @@ def _logger_factory():
     if is_production() or is_staging():
         return structlog.BytesLoggerFactory()
 
-    # allow user to specify a log in case they want to do something meaningful with the stdout
-
-    if python_log_path := config("PYTHON_LOG_PATH", default=None):
-        python_log = open(python_log_path, "a", encoding="utf-8")
+    if PYTHON_LOG_PATH:
+        python_log = open(PYTHON_LOG_PATH, "a", encoding="utf-8")
         return structlog.PrintLoggerFactory(file=python_log)
 
     else:
