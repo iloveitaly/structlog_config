@@ -17,6 +17,7 @@ Note that `{LOGGER_NAME}` is the name of the system logger assigned via `logging
 ## Related Projects
 
 * https://github.com/underyx/structlog-pretty
+* https://pypi.org/project/httpx-structlog/
 
 ## References
 

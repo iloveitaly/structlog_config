@@ -104,3 +104,40 @@ class PathPrettifier:
             event_dict[key] = str(path)
 
         return event_dict
+
+
+# https://github.com/amenezes/structlog_ext_utils/blob/9b4fbd301c891dd55faf4ce3b102c08a5a0f970a/structlog_ext_utils/processors.py#L59
+class RenameField:
+    """
+    A structlog processor that renames fields in the event dictionary.
+
+    This processor allows for renaming keys in the event dictionary during log processing.
+
+    Parameters
+    ----------
+    fields : dict
+        A dictionary mapping original field names (keys) to new field names (values).
+        For example, {'old_name': 'new_name'} will rename 'old_name' to 'new_name'.
+
+    Returns
+    -------
+    callable
+        A callable that transforms an event dictionary by renaming specified fields.
+
+    Examples
+    --------
+    >>> from structlog.processors import TimeStamper
+    >>> processors = [
+    ...     RenameField({"timestamp": "new_field"}),
+    ... ]
+    >>> # This will rename "timestamp" field to "New_field" in log events
+    """
+
+    def __init__(self, fields: dict) -> None:
+        self.fields = fields
+
+    def __call__(self, _, __, event_dict):
+        for from_key, to_key in self.fields.items():
+            if event_dict.get(from_key):
+                event_dict[to_key] = event_dict.pop(from_key)
+        return event_dict
