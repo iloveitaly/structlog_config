@@ -13,6 +13,7 @@ from structlog.processors import ExceptionRenderer
 from structlog.tracebacks import ExceptionDictTransformer
 
 from structlog_config.formatters import (
+    PathPrettifier,
     logger_name,
     pretty_traceback_exception_formatter,
     simplify_activemodel_objects,
@@ -23,7 +24,6 @@ from .environments import is_production, is_pytest, is_staging
 from .stdlib_logging import (
     _get_log_level,
     redirect_stdlib_loggers,
-    reset_stdlib_logger,
     silence_loud_loggers,
 )
 from .warnings import redirect_showwarnings
@@ -97,6 +97,7 @@ PROCESSORS: list[structlog.types.Processor] = [
     logger_name,
     add_fastapi_context,
     simplify_activemodel_objects,
+    PathPrettifier(),
     structlog.processors.TimeStamper(fmt="iso", utc=True),
     # add `stack_info=True` to a log and get a `stack` attached to the log
     structlog.processors.StackInfoRenderer(),

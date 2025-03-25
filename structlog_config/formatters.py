@@ -1,4 +1,5 @@
 import logging
+from pathlib import Path
 from typing import Any, MutableMapping, TextIO
 
 from structlog.typing import EventDict, ExcInfo
@@ -72,3 +73,34 @@ def pretty_traceback_exception_formatter(sio: TextIO, exc_info: ExcInfo) -> None
     _, exc_value, traceback = exc_info
     formatted_exception = exc_to_traceback_str(exc_value, traceback, color=not NO_COLOR)
     sio.write("\n" + formatted_exception)
+
+
+# lifted from:
+# https://github.com/underyx/structlog-pretty/blob/a6a4abbb1f6e4a879f9f5a95ba067577cea65a08/structlog_pretty/processors.py#L226C1-L252C26
+class PathPrettifier:
+    """A processor for printing paths.
+
+    Changes all pathlib.Path objects.
+
+    1. Remove PosixPath(...) wrapper by calling str() on the path.
+    2. If path is relative to current working directory,
+       print it relative to working directory.
+
+    Note that working directory is determined when configuring structlog.
+    """
+
+    def __init__(self, base_dir: Path | None = None):
+        self.base_dir = base_dir or Path.cwd()
+
+    def __call__(self, _, __, event_dict):
+        for key, path in event_dict.items():
+            if not isinstance(path, Path):
+                continue
+            path = event_dict[key]
+            try:
+                path = path.relative_to(self.base_dir)
+            except ValueError:
+                pass  # path is not relative to cwd
+            event_dict[key] = str(path)
+
+        return event_dict
