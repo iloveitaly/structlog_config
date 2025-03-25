@@ -13,17 +13,23 @@ env:
   PIP_DEFAULT_TIMEOUT: 60
   PIP_RETRIES: 5
 
+  # required otherwise github api calls are rate limited
+  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
 jobs:
   # if you want to test across multiple python versions
   matrix-test:
-    runs-on: ubuntu-latest
     strategy:
       matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
         python-version: ["3.13", "3.12", "3.11", "3.10", "3.9"]
+    runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
       - uses: jdx/mise-action@v2
       - run: mise use python@${{ matrix.python-version }}
+      - uses: iloveitaly/github-action-direnv-load-and-mask@master
+      - run: docker compose up -d --wait
       - run: uv sync
       - name: Make sure the CLI runs properly
         run: uv run ${{ github.event.repository.name }} --help
