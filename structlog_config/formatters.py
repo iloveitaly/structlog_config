@@ -166,3 +166,20 @@ class RenameField:
             if event_dict.get(from_key):
                 event_dict[to_key] = event_dict.pop(from_key)
         return event_dict
+
+
+def add_fastapi_context(
+    logger: logging.Logger,
+    method_name: str,
+    event_dict: MutableMapping[str, Any],
+) -> MutableMapping[str, Any]:
+    """
+    Take all state added to starlette-context and add to the logs
+
+    https://github.com/tomwojcik/starlette-context/blob/master/example/setup_logging.py
+    """
+    from starlette_context import context
+
+    if context.exists():
+        event_dict.update(context.data)
+    return event_dict

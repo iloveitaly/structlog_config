@@ -1,15 +1,14 @@
 import logging
-from typing import Any, MutableMapping
 
 import orjson
 import structlog
 import structlog.dev
-from starlette_context import context
 from structlog.processors import ExceptionRenderer
 from structlog.tracebacks import ExceptionDictTransformer
 
 from structlog_config.formatters import (
     PathPrettifier,
+    add_fastapi_context,
     logger_name,
     pretty_traceback_exception_formatter,
     simplify_activemodel_objects,
@@ -68,21 +67,6 @@ def log_processors_for_environment() -> list[structlog.types.Processor]:
             exception_formatter=pretty_traceback_exception_formatter,
         )
     ]
-
-
-def add_fastapi_context(
-    logger: logging.Logger,
-    method_name: str,
-    event_dict: MutableMapping[str, Any],
-) -> MutableMapping[str, Any]:
-    """
-    Take all state added to starlette-context and add to the logs
-
-    https://github.com/tomwojcik/starlette-context/blob/master/example/setup_logging.py
-    """
-    if context.exists():
-        event_dict.update(context.data)
-    return event_dict
 
 
 # order here is not particularly informed
