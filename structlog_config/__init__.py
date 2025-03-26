@@ -1,13 +1,9 @@
 import logging
-import os
-import sys
 from typing import Any, MutableMapping
 
 import orjson
 import structlog
 import structlog.dev
-from app.constants import NO_COLOR
-from decouple import config
 from starlette_context import context
 from structlog.processors import ExceptionRenderer
 from structlog.tracebacks import ExceptionDictTransformer
@@ -19,7 +15,7 @@ from structlog_config.formatters import (
     simplify_activemodel_objects,
 )
 
-from .constants import LOG_LEVEL, PYTHON_LOG_PATH
+from .constants import LOG_LEVEL, NO_COLOR, PYTHON_LOG_PATH
 from .environments import is_production, is_pytest, is_staging
 from .stdlib_logging import (
     _get_log_level,
@@ -158,7 +154,3 @@ def configure_logger():
     log.clear = structlog.contextvars.clear_contextvars
 
     return log
-
-
-def main():
-    logger.info("Hello, Logs!")
