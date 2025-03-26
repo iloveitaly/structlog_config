@@ -1,14 +1,7 @@
 import os
 import typing as t
 
-
-def config(key: str, default=None, cast=str):
-    value = os.environ.get(key)
-
-    if value is None:
-        return default
-
-    return cast(value)
+from decouple import config
 
 
 def python_environment() -> str:
