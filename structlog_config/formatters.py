@@ -4,6 +4,31 @@ from typing import Any, MutableMapping, TextIO
 
 from structlog.typing import EventDict, ExcInfo
 
+try:
+    import orjson
+except ImportError:
+    orjson = None
+
+try:
+    import sqlalchemy
+except ImportError:
+    sqlalchemy = None
+
+try:
+    import typeid
+except ImportError:
+    typeid = None
+
+try:
+    import pretty_traceback
+except ImportError:
+    pretty_traceback = None
+
+try:
+    import starlette_context
+except ImportError:
+    starlette_context = None
+
 
 def simplify_activemodel_objects(
     logger: logging.Logger,
