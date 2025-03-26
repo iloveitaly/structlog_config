@@ -14,6 +14,19 @@ Note that `{LOGGER_NAME}` is the name of the system logger assigned via `logging
 * `OPENAI_LOG_LEVEL`
 * `OPENAI_LOG_PATH`. Ignored in production.
 
+## FastAPI Access Logger
+
+Structured, simple access log with request timing to replace the default fastapi access log.
+
+Adapted from:
+
+- https://github.com/iloveitaly/fastapi-logger/blob/main/fastapi_structlog/middleware/access_log.py#L70
+- https://github.com/fastapiutils/fastapi-utils/blob/master/fastapi_utils/timing.py
+- https://pypi.org/project/fastapi-structlog/
+- https://pypi.org/project/asgi-correlation-id/
+- https://gist.github.com/nymous/f138c7f06062b7c43c060bf03759c29e
+- https://github.com/sharu1204/fastapi-structlog/blob/master/app/main.py
+
 ## Related Projects
 
 * https://github.com/underyx/structlog-pretty
