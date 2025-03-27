@@ -113,11 +113,11 @@ def _logger_factory():
         python_log = open(PYTHON_LOG_PATH, "a", encoding="utf-8")
         return structlog.PrintLoggerFactory(file=python_log)
 
-    else:
-        return structlog.PrintLoggerFactory()
+    # Default case
+    return structlog.PrintLoggerFactory()
 
 
-def configure_logger():
+def configure_logger(*, logger_factory=None):
     """
     Create a struct logger with some special additions:
 
@@ -127,19 +127,24 @@ def configure_logger():
     >>> log.local(key=value)
     >>> log.info("some message")
     >>> log.clear()
+
+    Args:
+        logger_factory: Optional logger factory to override the default
     """
+    # Reset structlog configuration to make sure we're starting fresh
+    # This is important for tests where configure_logger might be called multiple times
+    structlog.reset_defaults()
 
     redirect_stdlib_loggers()
     redirect_showwarnings()
     silence_loud_loggers()
 
     structlog.configure(
-        # Don't cache the loggers during tests, it make it hard to capture them
+        # Don't cache the loggers during tests, it makes it hard to capture them
         cache_logger_on_first_use=not is_pytest(),
         wrapper_class=structlog.make_filtering_bound_logger(_get_log_level()),
-        # structlog.stdlib.LoggerFactory is the default, which supports `structlog.stdlib.add_logger_name`
-        logger_factory=_logger_factory(),
-        processors=PROCESSORS,
+        logger_factory=logger_factory or _logger_factory(),
+        processors=get_default_processors(),
     )
 
     log = structlog.get_logger()
