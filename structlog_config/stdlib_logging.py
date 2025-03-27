@@ -40,13 +40,15 @@ def redirect_stdlib_loggers():
     # TODO I don't understand why we can't use a processor stack as-is here. Need to investigate further.
 
     # Use ProcessorFormatter to format log records using structlog processors
-    from .__init__ import PROCESSORS
+    from .__init__ import get_default_processors
+
+    processors = get_default_processors()
 
     formatter = ProcessorFormatter(
         processors=[
             # required to strip extra keys that the structlog stdlib bindings add in
             structlog.stdlib.ProcessorFormatter.remove_processors_meta,
-            PROCESSORS[-1]
+            processors[-1]
             if not is_production() and not is_staging()
             # don't use ORJSON here, as the stdlib formatter chain expects a str not a bytes
             else structlog.processors.JSONRenderer(sort_keys=True),
@@ -57,7 +59,7 @@ def redirect_stdlib_loggers():
             # https://github.com/hynek/structlog/issues/254
             structlog.stdlib.add_logger_name,
             # omit the renderer so we can implement our own
-            *PROCESSORS[:-1],
+            *processors[:-1],
         ],
     )
     handler.setFormatter(formatter)

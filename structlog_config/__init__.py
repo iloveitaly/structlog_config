@@ -95,10 +95,6 @@ def get_default_processors() -> list[structlog.types.Processor]:
     return [processor for processor in processors if processor is not None]
 
 
-# Use the function to get the processors
-PROCESSORS: list[structlog.types.Processor] = get_default_processors()
-
-
 def _logger_factory():
     """
     Allow dev users to redirect logs to a file using PYTHON_LOG_PATH
