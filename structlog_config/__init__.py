@@ -14,6 +14,7 @@ from structlog_config.formatters import (
     simplify_activemodel_objects,
 )
 
+from . import packages
 from .constants import LOG_LEVEL, NO_COLOR, PYTHON_LOG_PATH
 from .environments import is_production, is_pytest, is_staging
 from .stdlib_logging import (
@@ -64,25 +65,38 @@ def log_processors_for_environment() -> list[structlog.types.Processor]:
     return [
         structlog.dev.ConsoleRenderer(
             colors=not NO_COLOR,
-            exception_formatter=pretty_traceback_exception_formatter,
+            exception_formatter=pretty_traceback_exception_formatter
+            if packages.pretty_traceback
+            else structlog.dev.default_exception_formatter,
         )
     ]
 
 
-# order here is not particularly informed
-PROCESSORS: list[structlog.types.Processor] = [
-    # although this is stdlib, it's needed, although I'm not sure entirely why
-    structlog.stdlib.add_log_level,
-    structlog.contextvars.merge_contextvars,
-    logger_name,
-    add_fastapi_context,
-    simplify_activemodel_objects,
-    PathPrettifier(),
-    structlog.processors.TimeStamper(fmt="iso", utc=True),
-    # add `stack_info=True` to a log and get a `stack` attached to the log
-    structlog.processors.StackInfoRenderer(),
-    *log_processors_for_environment(),
-]
+def get_default_processors() -> list[structlog.types.Processor]:
+    """
+    Return the default list of processors for structlog configuration.
+    """
+    processors = [
+        # although this is stdlib, it's needed, although I'm not sure entirely why
+        structlog.stdlib.add_log_level,
+        structlog.contextvars.merge_contextvars,
+        logger_name,
+        add_fastapi_context if packages.starlette_context else None,
+        simplify_activemodel_objects
+        if packages.activemodel and packages.typeid
+        else None,
+        PathPrettifier(),
+        structlog.processors.TimeStamper(fmt="iso", utc=True),
+        # add `stack_info=True` to a log and get a `stack` attached to the log
+        structlog.processors.StackInfoRenderer(),
+        *log_processors_for_environment(),
+    ]
+
+    return [processor for processor in processors if processor is not None]
+
+
+# Use the function to get the processors
+PROCESSORS: list[structlog.types.Processor] = get_default_processors()
 
 
 def _logger_factory():
