@@ -1,10 +1,12 @@
 import logging
+from typing import Protocol
 
 import orjson
 import structlog
 import structlog.dev
 from structlog.processors import ExceptionRenderer
 from structlog.tracebacks import ExceptionDictTransformer
+from structlog.typing import FilteringBoundLogger
 
 from structlog_config.formatters import (
     PathPrettifier,
@@ -15,24 +17,25 @@ from structlog_config.formatters import (
 )
 
 from . import packages
-from .constants import LOG_LEVEL, NO_COLOR, PYTHON_LOG_PATH
+from .constants import NO_COLOR, PYTHON_LOG_PATH
 from .environments import is_production, is_pytest, is_staging
 from .stdlib_logging import (
     _get_log_level,
+    _get_log_level_name,
     redirect_stdlib_loggers,
     silence_loud_loggers,
 )
 from .warnings import redirect_showwarnings
 
 logging.basicConfig(
-    level=LOG_LEVEL,
+    level=_get_log_level_name(),
 )
 
 package_logger = logging.getLogger(__name__)
 
 
-def log_processors_for_environment() -> list[structlog.types.Processor]:
-    if is_production() or is_staging():
+def log_processors_for_mode(json_logger: bool) -> list[structlog.types.Processor]:
+    if json_logger:
 
         def orjson_dumps_sorted(value, *args, **kwargs):
             "sort_keys=True is not supported, so we do it manually"
@@ -72,7 +75,7 @@ def log_processors_for_environment() -> list[structlog.types.Processor]:
     ]
 
 
-def get_default_processors() -> list[structlog.types.Processor]:
+def get_default_processors(json_logger) -> list[structlog.types.Processor]:
     """
     Return the default list of processors for structlog configuration.
     """
@@ -89,20 +92,20 @@ def get_default_processors() -> list[structlog.types.Processor]:
         structlog.processors.TimeStamper(fmt="iso", utc=True),
         # add `stack_info=True` to a log and get a `stack` attached to the log
         structlog.processors.StackInfoRenderer(),
-        *log_processors_for_environment(),
+        *log_processors_for_mode(json_logger),
     ]
 
     return [processor for processor in processors if processor is not None]
 
 
-def _logger_factory():
+def _logger_factory(json_logger: bool):
     """
     Allow dev users to redirect logs to a file using PYTHON_LOG_PATH
 
     In production, optimized for speed (https://www.structlog.org/en/stable/performance.html)
     """
 
-    if is_production() or is_staging():
+    if json_logger:
         return structlog.BytesLoggerFactory()
 
     if PYTHON_LOG_PATH:
@@ -113,7 +116,26 @@ def _logger_factory():
     return structlog.PrintLoggerFactory()
 
 
-def configure_logger(*, logger_factory=None):
+class LoggerWithContext(FilteringBoundLogger, Protocol):
+    def context(self, *args, **kwargs) -> None: ...
+    def local(self, *args, **kwargs) -> None: ...
+    def clear(self) -> None: ...
+
+
+def add_simple_context_aliases(log) -> LoggerWithContext:
+    # context manager to auto-clear context
+    log.context = structlog.contextvars.bound_contextvars
+    # set thread-local context
+    log.local = structlog.contextvars.bind_contextvars
+    # clear thread-local context
+    log.clear = structlog.contextvars.clear_contextvars
+
+    return log
+
+
+def configure_logger(
+    *, logger_factory=None, json_logger: bool | None = None
+) -> LoggerWithContext:
     """
     Create a struct logger with some special additions:
 
@@ -126,12 +148,17 @@ def configure_logger(*, logger_factory=None):
 
     Args:
         logger_factory: Optional logger factory to override the default
+        json_logger: Optional flag to use JSON logging. If None, defaults to
+            production or staging environment sourced from PYTHON_ENV.
     """
     # Reset structlog configuration to make sure we're starting fresh
     # This is important for tests where configure_logger might be called multiple times
     structlog.reset_defaults()
 
-    redirect_stdlib_loggers()
+    if json_logger is None:
+        json_logger = is_production() or is_staging()
+
+    redirect_stdlib_loggers(json_logger)
     redirect_showwarnings()
     silence_loud_loggers()
 
@@ -139,17 +166,12 @@ def configure_logger(*, logger_factory=None):
         # Don't cache the loggers during tests, it makes it hard to capture them
         cache_logger_on_first_use=not is_pytest(),
         wrapper_class=structlog.make_filtering_bound_logger(_get_log_level()),
-        logger_factory=logger_factory or _logger_factory(),
-        processors=get_default_processors(),
+        logger_factory=logger_factory or _logger_factory(json_logger),
+        processors=get_default_processors(json_logger),
     )
 
     log = structlog.get_logger()
 
-    # context manager to auto-clear context
-    log.context = structlog.contextvars.bound_contextvars
-    # set thread-local context
-    log.local = structlog.contextvars.bind_contextvars
-    # clear thread-local context
-    log.clear = structlog.contextvars.clear_contextvars
+    add_simple_context_aliases(log)
 
     return log

@@ -4,6 +4,8 @@ from typing import Any, MutableMapping, TextIO
 
 from structlog.typing import EventDict, ExcInfo
 
+from structlog_config.constants import NO_COLOR
+
 
 def simplify_activemodel_objects(
     logger: logging.Logger,

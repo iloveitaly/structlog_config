@@ -2,13 +2,18 @@ import logging
 import sys
 
 import structlog
+from decouple import config
 
-from .constants import LOG_LEVEL, PYTHONASYNCIODEBUG
+from .constants import PYTHONASYNCIODEBUG
 from .environments import is_production, is_staging
 
 
+def _get_log_level_name() -> str:
+    return config("LOG_LEVEL", default="INFO", cast=str).upper()
+
+
 def _get_log_level():
-    return logging.getLevelNamesMapping()[LOG_LEVEL]
+    return logging.getLevelNamesMapping()[_get_log_level_name()]
 
 
 def reset_stdlib_logger(
@@ -23,7 +28,7 @@ def reset_stdlib_logger(
         std_logger.setLevel(level_override)
 
 
-def redirect_stdlib_loggers():
+def redirect_stdlib_loggers(json_logger: bool):
     """
     Redirect all standard logging module loggers to use the structlog configuration.
 
@@ -42,7 +47,7 @@ def redirect_stdlib_loggers():
     # Use ProcessorFormatter to format log records using structlog processors
     from .__init__ import get_default_processors
 
-    processors = get_default_processors()
+    processors = get_default_processors(json_logger=json_logger)
 
     formatter = ProcessorFormatter(
         processors=[
@@ -105,8 +110,8 @@ def redirect_stdlib_loggers():
 
     # TODO do i need to setup exception overrides as well?
     # https://gist.github.com/nymous/f138c7f06062b7c43c060bf03759c29e#file-custom_logging-py-L114-L128
-    if sys.excepthook != sys.__excepthook__:
-        logging.getLogger(__name__).warning("sys.excepthook has been overridden.")
+    # if sys.excepthook != sys.__excepthook__:
+    #     logging.getLogger(__name__).warning("sys.excepthook has been overridden.")
 
 
 def silence_loud_loggers():
