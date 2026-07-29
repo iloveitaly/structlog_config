@@ -58,6 +58,7 @@ from .constants import (
     CAPTURE_PERSIST_ALL_KEY,
     CAPTURED_TESTS_KEY,
     PLUGIN_NAMESPACE,
+    SLOW_TESTS_DISPLAY_LIMIT,
     SLOW_THRESHOLD_KEY,
     SUBPROCESS_CAPTURE_ENV,
     logger,
@@ -281,6 +282,10 @@ def pytest_terminal_summary(terminalreporter, config: pytest.Config) -> None:
         slow_reports = _collect_slow_reports(terminalreporter, slow_threshold)
         if slow_reports:
             terminalreporter.write_sep("=", "slow tests")
-            for report in slow_reports:
+            for report in slow_reports[:SLOW_TESTS_DISPLAY_LIMIT]:
                 terminalreporter.write("[slow]", yellow=True)
                 terminalreporter.write_line(f" {report.duration:.2f}s {report.nodeid}")
+
+            hidden = len(slow_reports) - SLOW_TESTS_DISPLAY_LIMIT
+            if hidden > 0:
+                terminalreporter.write_line(f"{hidden} additional slow tests hidden")
