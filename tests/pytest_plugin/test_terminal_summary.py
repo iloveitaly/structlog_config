@@ -245,6 +245,68 @@ def test_slow_tests_sorted_by_duration(pytester, plugin_conftest):
     assert slower_pos < faster_pos
 
 
+def test_slow_tests_output_limited_to_ten(pytester, plugin_conftest, monkeypatch):
+    """Slow section should list at most the display limit and note how many are hidden."""
+    monkeypatch.setattr(
+        "structlog_config.pytest_plugin.SLOW_TESTS_DISPLAY_LIMIT", 2
+    )
+    pytester.makeconftest(plugin_conftest)
+    pytester.makepyfile(
+        """
+        import time
+
+        def test_slow_0():
+            time.sleep(0.15)
+
+        def test_slow_1():
+            time.sleep(0.12)
+
+        def test_slow_2():
+            time.sleep(0.09)
+
+        def test_slow_3():
+            time.sleep(0.06)
+        """
+    )
+
+    result = pytester.runpytest("--slow-test-threshold=0.05")
+    assert result.ret == 0
+
+    output = result.stdout.str()
+    assert output.count("[slow]") == 2
+    assert "2 additional slow tests hidden" in output
+    assert "test_slow_0" in output
+    assert "test_slow_1" in output
+    assert "test_slow_2" not in output
+    assert "test_slow_3" not in output
+
+
+def test_slow_tests_no_hidden_message_at_limit(pytester, plugin_conftest, monkeypatch):
+    """Exactly display-limit slow tests should not show a hidden count."""
+    monkeypatch.setattr(
+        "structlog_config.pytest_plugin.SLOW_TESTS_DISPLAY_LIMIT", 2
+    )
+    pytester.makeconftest(plugin_conftest)
+    pytester.makepyfile(
+        """
+        import time
+
+        def test_slow_0():
+            time.sleep(0.1)
+
+        def test_slow_1():
+            time.sleep(0.1)
+        """
+    )
+
+    result = pytester.runpytest("--slow-test-threshold=0.05")
+    assert result.ret == 0
+
+    output = result.stdout.str()
+    assert output.count("[slow]") == 2
+    assert "additional slow tests hidden" not in output
+
+
 def test_no_color_suppresses_ansi_in_slow_output(
     pytester, plugin_conftest, monkeypatch
 ):

@@ -33,6 +33,9 @@ CAPTURED_TESTS_KEY = pytest.StashKey[list[CapturedTestFailure]]()
 SLOW_THRESHOLD_KEY = pytest.StashKey[float | None]()
 "Stash key for the slow test threshold in seconds; None means slow reporting is disabled."
 
+SLOW_TESTS_DISPLAY_LIMIT = 10
+"Max number of slow tests listed in the terminal summary before truncating."
+
 PLUGIN_NAMESPACE: str = "structlog_config"
 "Namespace used when registering options and artifact dirs with pytest-plugin-utils."
 
