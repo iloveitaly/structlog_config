@@ -1,0 +1,5 @@
+{
+  "name": "structlog-config",
+  "user": "ubuntu",
+  "install": "./.cursor/install.sh"
+}
