@@ -15,6 +15,7 @@ from structlog_config.fastapi_access_logger import (
     get_path_with_query_string,
     get_route_name,
     is_static_assets_request,
+    uvicorn_worker_id_from_scope,
 )
 
 
@@ -349,3 +350,67 @@ def test_client_ip_from_request():
 
     result = client_ip_from_request(request)
     assert result == "172.16.0.2"
+
+
+class InjectUvicornWorkerId:
+    """ASGI wrapper that sets `scope["state"]["uvicorn_worker_id"]` like Uvicorn."""
+
+    def __init__(self, app, worker_id):
+        self.app = app
+        self.worker_id = worker_id
+
+    async def __call__(self, scope, receive, send):
+        if scope["type"] in ("http", "websocket"):
+            state = scope.setdefault("state", {})
+            if self.worker_id is not None:
+                state["uvicorn_worker_id"] = self.worker_id
+
+        await self.app(scope, receive, send)
+
+
+def test_uvicorn_worker_id_from_scope():
+    assert uvicorn_worker_id_from_scope({}) is None
+    assert uvicorn_worker_id_from_scope({"state": {}}) is None
+    assert uvicorn_worker_id_from_scope({"state": None}) is None
+    assert uvicorn_worker_id_from_scope({"state": "not-a-dict"}) is None
+    assert uvicorn_worker_id_from_scope({"state": {"uvicorn_worker_id": 3}}) == 3
+    assert uvicorn_worker_id_from_scope({"state": {"uvicorn_worker_id": "2"}}) == 2
+    assert (
+        uvicorn_worker_id_from_scope({"state": {"uvicorn_worker_id": "nope"}}) is None
+    )
+    assert uvicorn_worker_id_from_scope({"state": {"uvicorn_worker_id": None}}) is None
+
+
+def test_access_log_omits_uvicorn_worker_id_when_missing(client):
+    with mock.patch("structlog_config.fastapi_access_logger.log") as mock_log:
+        response = client.get("/")
+        assert response.status_code == 200
+
+        mock_log.info.assert_called_once()
+        assert "uvicorn_worker_id" not in mock_log.info.call_args.kwargs
+
+
+def test_access_log_includes_uvicorn_worker_id(test_app):
+    with mock.patch("structlog_config.fastapi_access_logger.log") as mock_log:
+        client = TestClient(InjectUvicornWorkerId(test_app, 4))
+        response = client.get("/")
+        assert response.status_code == 200
+
+        mock_log.info.assert_called_once()
+        assert mock_log.info.call_args.kwargs["uvicorn_worker_id"] == 4
+
+
+def test_access_log_exception_includes_uvicorn_worker_id(test_app):
+    @test_app.get("/boom-worker")
+    def raise_error():
+        raise RuntimeError("kaboom")
+
+    with mock.patch("structlog_config.fastapi_access_logger.log") as mock_log:
+        client = TestClient(
+            InjectUvicornWorkerId(test_app, 2), raise_server_exceptions=False
+        )
+        response = client.get("/boom-worker")
+
+        assert response.status_code == 500
+        mock_log.error.assert_called_once()
+        assert mock_log.error.call_args.kwargs["uvicorn_worker_id"] == 2
