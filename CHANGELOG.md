@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.15.0](https://github.com/iloveitaly/structlog-config/compare/v0.14.0...v0.15.0) (2026-08-25)
+
+
+### Features
+
+* py.typed for mypy ([#158](https://github.com/iloveitaly/structlog-config/issues/158)) ([9f8dd04](https://github.com/iloveitaly/structlog-config/commit/9f8dd049769ae444b8cf46b909ee7d5982d600c5))
+
 ## [0.14.0](https://github.com/iloveitaly/structlog-config/compare/v0.13.0...v0.14.0) (2026-05-07)
 
 
