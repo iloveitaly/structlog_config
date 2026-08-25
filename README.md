@@ -29,8 +29,6 @@ Here are the main goals:
 uv add structlog-config
 ```
 
-The package is [PEP 561](https://peps.python.org/pep-0561/) typed (`py.typed` + inline annotations). mypy and pyright will use those types; you do not need an `ignore_missing_imports` override for `structlog_config`.
-
 ## Usage
 
 ```python
