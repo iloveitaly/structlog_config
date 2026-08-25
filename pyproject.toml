@@ -12,6 +12,7 @@ dependencies = [
 ]
 urls = { "Repository" = "https://github.com/iloveitaly/structlog-config" }
 authors = [{ name = "Michael Bianco", email = "mike@mikebian.co" }]
+classifiers = ["Typing :: Typed"]
 
 [project.optional-dependencies]
 fastapi = [
