@@ -2,6 +2,7 @@
 Requires fastapi and is not loaded by default since fastapi is not a default dependency.
 """
 
+import os
 from time import perf_counter
 from urllib.parse import quote
 
@@ -17,6 +18,10 @@ from starlette.websockets import WebSocket
 
 log = structlog.get_logger()
 ipware = FastAPIIpWare()
+
+# TODO PID is a poor worker identifier. Replace with uvicorn's native worker ID
+# when https://github.com/encode/uvicorn/pull/2529 lands.
+PROCESS_PID = os.getpid()
 
 
 def get_route_name(app: FastAPI, scope: Scope, prefix: str = "") -> str:
@@ -132,6 +137,7 @@ def add_middleware(
                 query=scope["query_string"].decode(),
                 client_ip=client_ip_from_request(request),
                 route=route_name,
+                pid=PROCESS_PID,
             )
 
             # we have to duplicate the above logic since we want to reraise the exception
@@ -151,6 +157,7 @@ def add_middleware(
             query=scope["query_string"].decode(),
             client_ip=client_ip_from_request(request),
             route=route_name,
+            pid=PROCESS_PID,
         )
 
         return response
